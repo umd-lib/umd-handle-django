@@ -10,22 +10,51 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from django.core.management.commands.runserver import Command as runserver
+from django.core.management.utils import get_random_secret_key
+from environ import Env
 from pathlib import Path
+from urlobject import URLObject
+from socket import gethostname, gethostbyname
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# Static file dir
+STATIC_ROOT = str(BASE_DIR / 'staticfiles')
+
+# Take environment variables from .env file
+Env.read_env(BASE_DIR / '.env')
+env = Env()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3@^b-*(8vfzx2z^rd(=29-k+(7hmcm7mwk2cew=+w^ej2_^-_%'
+SECRET_KEY = env('SECRET_KEY', default=get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', False)
 
-ALLOWED_HOSTS = []
+SERVER_HOST = env.str('SERVER_HOST', '0.0.0.0')
+SERVER_PORT = env.str('SERVER_PORT', '3000')
+runserver.default_addr = SERVER_HOST
+runserver.default_port = SERVER_PORT
+
+DOMAIN_NAME = env.str('DOMAIN_NAME', 'handle-local')
+
+BASE_URL = URLObject(env.str('BASE_URL', f"http://handle-local:{SERVER_PORT}/"))
+CSRF_TRUSTED_ORIGINS = [str(BASE_URL.with_path(''))]
+
+# Default list of allowed hosts
+ALLOWED_HOSTS = [BASE_URL.hostname]
+
+# Add the IP address (used by k8s health probes)
+try:
+    ALLOWED_HOSTS.append(gethostbyname(gethostname()))
+except OSError:
+    # ignore if we can't get the IP address
+    pass
 
 
 # Application definition
@@ -42,6 +71,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,14 +102,16 @@ WSGI_APPLICATION = 'umd_handle.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': env.str('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': env.str('DB_NAME', BASE_DIR / 'db.sqlite3'),
+        'USER': env.str('DB_USER', ''),
+        'PASSWORD': env.str('DB_PASSWORD', ''),
+        'HOST': env.str('DB_HOST', ''),
+        'PORT': env.str('DB_PORT', ''),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -115,7 +147,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = 'staticfiles/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

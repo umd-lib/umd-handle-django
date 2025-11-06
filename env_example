@@ -1,0 +1,35 @@
+# DEBUG - Set to `True` for detailed error messages during local development
+#         Should be `False` for production
+
+DEBUG=True
+
+# Server settings
+# DOMAIN_NAME - the domain name used by the server
+# SERVER_HOST - The IP address/host URL where the server is run.
+# SERVER_PORT - the port the application will run on in Docker. Ignored in
+#               local development
+DOMAIN_NAME=handle-local
+BASE_URL=http://handle-local:3000/
+SERVER_PORT=3000
+
+# SECRET_KEY - Secret key used for provide cryptographic signing.
+#              Does not need to be set in local development, which will get
+#              a randomly generated secret key.
+
+# SECRET_KEY=
+
+# Database settings - not needed for local development
+#
+# DB_ENGINE - specifies the database driver to use
+# DB_NAME - the name (or filename, for Sqlite) of the database to connect to
+# DB_USER - the user to connect to the database with
+# DB_PASSWORD - the password to connect to the database with
+# DB_HOST - the database host
+# DB_PORT - the database port
+
+# DB_ENGINE=
+# DB_NAME=
+# DB_USER=
+# DB_PASSWORD=
+# DB_HOST=
+# DB_PORT=
