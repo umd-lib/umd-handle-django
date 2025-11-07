@@ -1,0 +1,426 @@
+openapi: 3.0.0
+info:
+  version: 1.1.0
+  title: umd-handle API
+  description: The umd-handle service API
+
+servers:
+  - url: https://handle.lib.umd.edu/api/v1
+
+# JWT authentication
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+security:
+  - bearerAuth: []
+
+tags:
+- name: "handles"
+
+paths:
+  /handles/{prefix}/{suffix}:
+    get:
+      tags:
+      - "handles"
+      description: Returns the resolved URL for the given handle
+      operationId: "resolveHandle"
+      parameters:
+        - name: prefix
+          in: path
+          required: true
+          description: The handle prefix
+          schema:
+            type: string
+        - name: suffix
+          in: path
+          required: true
+          description: The handle suffix
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - url
+                properties:
+                  url:
+                    description: Fully-qualified URL to the resource
+                    example: 'https://digital.lib.umd.edu/resultsnew/id/umd:734086'
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Handle not found
+    patch:
+      tags:
+      - "handles"
+      description: Update an existing handle
+      operationId: "updateHandle"
+      parameters:
+        - name: prefix
+          in: path
+          required: true
+          description: The handle prefix
+          schema:
+            type: string
+        - name: suffix
+          in: path
+          required: true
+          description: The handle suffix
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  description: The URL the handle should resolve to
+                  type: string
+                  example: 'http://example.com/resource/abc/123'
+                repo:
+                  description: The source repository for the resource
+                  type: string
+                  example: 'aspace'
+                repo_id:
+                  description: The internal id of the resource in the source repository
+                  type: string
+                  example: 'abc:123'
+                description:
+                  description: A short human-readable description of the resource, typically the title of the resource
+                  type: string
+                  example: 'An example resource'
+                notes:
+                  description: Any additional notes about the resource
+                  type: string
+                  example: 'An example resource used in demonstrating the REST API.'
+      responses:
+        '200':
+          description: 'Successful update of a handle'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - request
+                  - handle_url
+                properties:
+                  request:
+                    type: object
+                    description: The parameters provided in the request
+                    properties:
+                      prefix:
+                        description: The prefix provided in the request.
+                        type: string
+                        example: '1903.1'
+                      repo:
+                        description: The repo provided in the request.
+                        type: string
+                        example: 'aspace'
+                      repo_id:
+                        description: The repo_id provided in the request.
+                        type: string
+                        example: 'abc:123'
+                      url:
+                        description: The resource URL provided in the request.
+                        type: string
+                        example: 'http://example.com/resource/abc/123'
+                  suffix:
+                    description: The handle suffix
+                    example: '1'
+                    type: string
+                  handle_url:
+                    description: The URL for the handle
+                    example: 'https://hdl.handle.net/1903.1/1'
+                    type: string
+        '400':
+          description: 'Unsuccessful request due to invalid parameters, such as missing parameters, or unknown repository.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    description: A list of error messages
+                    example: ["Prefix 'NON-EXISTENT PREFIX' is not a valid prefix"]
+                    type: array
+                    items:
+                      type: string
+
+
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /handles/exists:
+    get:
+      tags:
+      - "handles"
+      description: Returns whether a handle exists for the given parameters
+      operationId: "exists"
+      parameters:
+        - name: repo
+          in: query
+          required: true
+          description: The repository of the resource
+          schema:
+            type: string
+        - name: repo_id
+          in: query
+          required: true
+          description: The identifier for the resource in the respository
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - request
+                  - exists
+                properties:
+                  request:
+                    type: object
+                    description: The parameters provided in the request
+                    properties:
+                      repo:
+                        description: The repo provided in the request.
+                        type: string
+                        example: 'aspace'
+                      repo_id:
+                        description: The repo_id provided in the request.
+                        type: string
+                        example: 'abc:123'
+                  exists:
+                    description: Flag indicating whether a handle exists
+                    example: true
+                    type: boolean
+                  handle_url:
+                    description: The URL for the handle, if one exists
+                    example: 'https://hdl.handle.net/1903.1/1'
+                    type: string
+                  prefix:
+                    description: The handle prefix, if one exists
+                    type: string
+                    example: '1903.1'
+                  suffix:
+                    description: The handle suffix, if one exists
+                    type: string
+                    example: '1'
+                  url:
+                    description: The URL of the resource, if one exists
+                    type: string
+                    example: 'http://example.com/resource/abc/123'
+        '400':
+          description: 'Unsuccessful request due to invalid parameters, such as missing parameters, or unknown repository.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    description: A list of error messages
+                    example: ["'repo_id' parameter is required"]
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /handles/info:
+    get:
+      tags:
+      - "handles"
+      description: Returns additional information about a handle
+      operationId: "info"
+      parameters:
+        - name: prefix
+          in: query
+          required: true
+          description: The handle prefix
+          schema:
+            type: string
+        - name: suffix
+          in: query
+          required: true
+          description: The handle suffix
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - request
+                  - exists
+                properties:
+                  request:
+                    type: object
+                    description: The parameters provided in the request
+                    properties:
+                      prefix:
+                        description: The prefix provided in the request.
+                        type: string
+                        example: '1903.1'
+                      suffix:
+                        description: The suffix provided in the request.
+                        type: string
+                        example: '1'
+                  exists:
+                    description: Flag indicating whether a handle exists
+                    example: true
+                    type: boolean
+                  handle_url:
+                    description: The URL for the handle, if one exists
+                    example: 'https://hdl.handle.net/1903.1/1'
+                    type: string
+                  prefix:
+                    description: The handle prefix, if one exists
+                    type: string
+                    example: '1903.1'
+                  suffix:
+                    description: The handle suffix, if one exists
+                    type: string
+                    example: '1'
+                  url:
+                    description: The URL of the resource, if one exists
+                    type: string
+                    example: 'http://example.com/resource/abc/123'
+                  repo:
+                    description: The source repository for the resource, if one exists
+                    type: string
+                    example: 'fedora2'
+                  repo_id:
+                    description: The internal id of the resource in the source repository, if one exists
+                    type: string
+                    example: 'abc:123'
+        '400':
+          description: 'Unsuccessful request due to invalid parameters, such as missing parameters, or unknown repository.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    description: A list of error messages
+                    example: ["'prefix' parameter is required"]
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /handles:
+    post:
+      tags:
+      - "handles"
+      description: Mint a new handle for a URL
+      operationId: "mintHandle"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prefix
+                - url
+                - repo
+                - repo_id
+              properties:
+                prefix:
+                  description: The Handle.net prefix to use for the resource
+                  type: string
+                  example: '1903.1'
+                url:
+                  description: The URL the handle should resolve to
+                  type: string
+                  example: 'http://example.com/resource/abc/123'
+                repo:
+                  description: The source repository for the resource
+                  type: string
+                  example: 'aspace'
+                repo_id:
+                  description: The internal id of the resource in the source repository
+                  type: string
+                  example: 'abc:123'
+                description:
+                  description: A short human-readable description of the resource, typically the title of the resource
+                  type: string
+                  example: 'An example resource'
+                notes:
+                  description: Any additional notes about the resource
+                  type: string
+                  example: 'An example resource used in demonstrating the REST API.'
+      responses:
+        '200':
+          description: 'Successful creation of a handle'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - request
+                  - suffix
+                  - handle_url
+                properties:
+                  request:
+                    type: object
+                    description: The parameters provided in the request
+                    properties:
+                      prefix:
+                        description: The prefix provided in the request.
+                        type: string
+                        example: '1903.1'
+                      repo:
+                        description: The repo provided in the request.
+                        type: string
+                        example: 'aspace'
+                      repo_id:
+                        description: The repo_id provided in the request.
+                        type: string
+                        example: 'abc:123'
+                      url:
+                        description: The resource URL provided in the request.
+                        type: string
+                        example: 'http://example.com/resource/abc/123'
+                  suffix:
+                    description: The handle suffix
+                    example: '1'
+                    type: string
+                  handle_url:
+                    description: The URL for the handle
+                    example: 'https://hdl.handle.net/1903.1/1'
+                    type: string
+        '400':
+          description: 'Unsuccessful request due to invalid parameters, such as missing parameters, or unknown repository.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    description: A list of error messages
+                    example: ["Prefix 'NON-EXISTENT PREFIX' is not a valid prefix"]
+                    type: array
+                    items:
+                      type: string
+
+
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+

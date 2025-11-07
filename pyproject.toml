@@ -1,0 +1,33 @@
+[project]
+name = "umd-handle-django"
+description = "UMD Handle Service (Django implementation)"
+version = "1.0.0-dev"
+dependencies = [
+    "click~=8.3",
+    "django~=5.0",
+    "django-environ~=0.12",
+    "urlobject~=2.4",
+    "waitress~=3.0",
+    "whitenoise~=6.11",
+]
+
+[project.optional-dependencies]
+prod = [
+    "psycopg2-binary~=2.9",
+]
+test = [
+    "pytest~=8.4",
+    "pytest-django~=4.11",
+    "ruff~=0.4",
+]
+
+[project.scripts]
+umd-handle = "umd_handle.server:run"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "umd_handle.settings"
+
+[tool.ruff.format]
+# Prefer single quotes over double quotes.
+quote-style = "single"
+exclude = ["manage.py"]
