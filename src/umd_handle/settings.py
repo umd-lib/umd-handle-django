@@ -14,8 +14,10 @@ from django.core.management.commands.runserver import Command as runserver
 from django.core.management.utils import get_random_secret_key
 from environ import Env
 from pathlib import Path
-from urlobject import URLObject
+import saml2.saml
+import saml2.xmldsig
 from socket import gethostname, gethostbyname
+from urlobject import URLObject
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -67,6 +69,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'djangosaml2',
 ]
 
 MIDDLEWARE = [
@@ -78,6 +81,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'djangosaml2.middleware.SamlSessionMiddleware',
 ]
 
 ROOT_URLCONF = 'umd_handle.urls'
@@ -112,6 +116,16 @@ DATABASES = {
         'PORT': env.str('DB_PORT', ''),
     }
 }
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'umd_handle.auth.ModifiedSaml2Backend',
+)
+
+LOGIN_URL = '/saml2/login/'
+# Default to the Django admin page after login
+LOGIN_REDIRECT_URL = '/admin'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -153,3 +167,154 @@ STATIC_URL = 'staticfiles/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# SameSite Cookies
+# The storage linked to it is accessible by default at request.saml_session.
+SAML_SESSION_COOKIE_NAME = 'saml_session'
+# By default, djangosaml2 will set “SameSite=None” for the SAML session cookie.
+SAML_SESSION_COOKIE_SAMESITE = env('SAML_SESSION_COOKIE_SAMESITE', default='None')
+# Remember that in your browser “SameSite=None” attribute MUST also have the “Secure” attribute,
+# which is required in order to use “SameSite=None”, otherwise the cookie will be blocked.
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=True)
+
+# Handling Post-Login Redirects
+SAML_ALLOWED_HOSTS = env('SAML_ALLOWED_HOSTS', cast=[str], default=ALLOWED_HOSTS)
+
+SAML_DEFAULT_BINDING = saml2.BINDING_HTTP_POST
+SAML_LOGOUT_REQUEST_PREFERRED_BINDING = saml2.BINDING_HTTP_POST
+SAML_IGNORE_LOGOUT_ERRORS = True
+
+# Users, attributes and account linking
+SAML_CREATE_UNKNOWN_USER = True
+SAML_ATTRIBUTE_MAPPING = {
+    'uid': ('username',),
+    'mail': ('email',),
+    'givenName': ('first_name',),
+    'urn:mace:umd.edu:sn': ('last_name',),
+}
+SAML_KEY_FILE = env('SAML_KEY_FILE', default='/etc/umd_handle/saml/key.pem')
+SAML_CERT_FILE = env('SAML_CERT_FILE', default='/etc/umd_handle/saml/cert.pem')
+
+SAML_CONFIG = {
+    # full path to the xmlsec1 binary program
+    'xmlsec_binary': env('XMLSEC1_PATH', default='/usr/bin/xmlsec1'),
+
+    # your entity id, usually your subdomain plus the url to the metadata view
+    'entityid': str(BASE_URL.netloc),
+
+    # directory with attribute mapping
+    'attribute_map_dir': str(BASE_DIR / 'attribute-maps'),
+
+    # Permits to have attributes not configured in attribute-mappings
+    # otherwise...without OID will be rejected
+    'allow_unknown_attributes': True,
+
+    # this block states what services we provide
+    'service': {
+        # we are just a lonely SP
+        'sp': {
+            'name': 'handle-local',
+            'name_id_format': saml2.saml.NAMEID_FORMAT_TRANSIENT,
+            # Define the authentication context
+            'requested_authn_context': {
+                'authn_context_class_ref': [
+                    'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport',
+                    'urn:oasis:names:tc:SAML:2.0:ac:classes:TLSClient',
+                ],
+                'comparison': 'minimum',
+            },
+
+            # For Okta add signed logout requests. Enable this:
+            # "logout_requests_signed": True,
+
+            'endpoints': {
+                # url and binding to the assertion consumer service view
+                # do not change the binding or service name
+                'assertion_consumer_service': [
+                    # Path provided in the "AssertionConsumerService" tag in
+                    # the service provider XML configuration provided to DIT
+                    # when setting up the Rails "umd-handle" application.
+                    (str(BASE_URL.with_path('/users/auth/saml/callback')), saml2.BINDING_HTTP_POST),
+                ],
+                # url and binding to the single logout service view
+                # do not change the binding or service name
+                'single_logout_service': [
+                    # Disable next two lines for HTTP_REDIRECT for IDPs that only support HTTP_POST. Ex. Okta:
+                    (str(BASE_URL.with_path('/saml2/ls/')), saml2.BINDING_HTTP_REDIRECT),
+                    (str(BASE_URL.with_path('/saml2/ls/post/')), saml2.BINDING_HTTP_POST),
+                ],
+            },
+
+            'signing_algorithm': saml2.xmldsig.SIG_RSA_SHA256,
+            'digest_algorithm': saml2.xmldsig.DIGEST_SHA256,
+
+            # Mandates that the identity provider MUST authenticate the
+            # presenter directly rather than rely on a previous security context.
+            'force_authn': False,
+
+            # Enable AllowCreate in NameIDPolicy.
+            'name_id_format_allow_create': False,
+
+            # attributes that this project need to identify a user
+            'required_attributes': ['givenName', 'sn', 'mail', 'eduPersonEntitlement'],
+
+            # attributes that may be useful to have but not required
+            'optional_attributes': [],
+
+            'want_response_signed': False,
+            'authn_requests_signed': True,
+            'logout_requests_signed': True,
+            # Indicates that Authentication Responses to this SP must
+            # be signed. If set to True, the SP will not consume
+            # any SAML Responses that are not signed.
+            'want_assertions_signed': False,
+
+            'only_use_keys_in_metadata': True,
+
+            # When set to true, the SP will consume unsolicited SAML
+            # Responses, i.e. SAML Responses for which it has not sent
+            # a respective SAML Authentication Request.
+            'allow_unsolicited': True,
+
+            # in this section the list of IdPs we talk to are defined
+            # This is not mandatory! All the IdP available in the metadata will be considered instead.
+            'idp': {
+                # we do not need a WAYF service since there is
+                # only an IdP defined here. This IdP should be
+                # present in our metadata
+
+                # the keys of this dictionary are entity ids
+                'https://shib.idm.umd.edu/shibboleth-idp/shibboleth': {
+                    'single_sign_on_service': {
+                        saml2.BINDING_HTTP_POST: 'https://shib.idm.umd.edu/shibboleth-idp/profile/SAML2/POST/SSO',
+                    },
+                    'single_logout_service': {
+                        saml2.BINDING_HTTP_REDIRECT: 'https://shib.idm.umd.edu/shibboleth-idp/profile/Logout',
+                    },
+                },
+            },
+        },
+    },
+
+    # where the remote metadata is stored, local, remote or mdq server.
+    # One metadata store or many ...
+    'metadata': {
+        'remote': [
+            {'url': 'https://shib.idm.umd.edu/shibboleth-idp/shibboleth'},
+        ],
+    },
+
+    # set to 1 to output debugging information
+    'debug': 1,
+
+    # Signing
+    'key_file': SAML_KEY_FILE,
+    'cert_file': SAML_CERT_FILE,
+
+    # Encryption
+    'encryption_keypairs': [{
+        'key_file': SAML_KEY_FILE,
+        'cert_file': SAML_CERT_FILE,
+    }],
+}
+

@@ -16,8 +16,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from djangosaml2 import views as saml_views
 
 urlpatterns = [
     path("api/", include("umd_handle.api.urls")),
     path('admin/', admin.site.urls),
+    path('saml2/', include('djangosaml2.urls')),
+
+    # Following path is necessary because "users/auth/saml/callback" was the
+    # path in the "AssertionConsumerService" tag provided in the service
+    # provider XML configuration sent to DIT for the Rails "umd-handle"
+    # application, and CAS requires an exact match.
+    path('users/auth/saml/callback', saml_views.AssertionConsumerServiceView.as_view(), name='saml2_acs'),
 ]

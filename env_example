@@ -18,6 +18,20 @@ SERVER_PORT=3000
 
 # SECRET_KEY=
 
+# SAML_KEY_FILE and SAML_CERT_FILE may be absolute or relative paths; if they
+# are relative they are relative to the project root directory
+# These can be downloaded from the handle-test-saml note in the Shared-SSDR
+# folder on LastPass; note that local development uses the key and cert
+# from the test server, so the file basename is handle-test-sp"
+SAML_KEY_FILE=
+SAML_CERT_FILE=
+# absolute path to the xmlsec1 binary
+# you can find this by running "which xmlsec1"
+XMLSEC1_PATH=
+# for local (i.e., non-HTTPS) development, we disable the secure cookie flag
+SAML_SESSION_COOKIE_SAMESITE=Lax
+SESSION_COOKIE_SECURE=False
+
 # Database settings - not needed for local development
 #
 # DB_ENGINE - specifies the database driver to use

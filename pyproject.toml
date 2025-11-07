@@ -6,6 +6,7 @@ dependencies = [
     "click~=8.3",
     "django~=5.0",
     "django-environ~=0.12",
+    "djangosaml2~=1.9",
     "urlobject~=2.4",
     "waitress~=3.0",
     "whitenoise~=6.11",
