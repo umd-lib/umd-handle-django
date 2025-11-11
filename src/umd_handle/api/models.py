@@ -10,6 +10,6 @@ class Handle(TimeStampedModel):
     description = models.CharField(blank=True)
     notes = models.TextField(blank=True)
 
-class JWTToken(models.Model):
+class JWTToken(TimeStampedModel):
     token = models.CharField()
     description = models.CharField()
