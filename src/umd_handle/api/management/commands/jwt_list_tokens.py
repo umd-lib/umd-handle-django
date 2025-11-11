@@ -25,7 +25,8 @@ class Command(BaseCommand):
             for jwt_token in jwt_tokens:
                 token = jwt_token.token
                 description = jwt_token.description
-                self.stdout.write(f"{token},{description}")
+                created = jwt_token.created
+                self.stdout.write(f"{token},{description},{created}")
         else:
             self.stdout.write("No token entries found!")
 
