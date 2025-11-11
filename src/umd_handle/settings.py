@@ -86,6 +86,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'djangosaml2.middleware.SamlSessionMiddleware',
     'umd_handle.middleware.LoginRequiredMiddleware',
+    'umd_handle.middleware.JWTAuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'umd_handle.urls'

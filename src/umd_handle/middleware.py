@@ -1,5 +1,7 @@
+import jwt
 from django.shortcuts import HttpResponseRedirect, reverse
 from django.conf import settings
+from django.http import JsonResponse
 
 class LoginRequiredMiddleware:
     def __init__(self, get_response):
@@ -22,3 +24,36 @@ class LoginRequiredMiddleware:
 
         response = self.get_response(request)
         return response
+
+class JWTAuthenticationMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        # Exclude specific URLs from JWT check if needed (e.g., login, public pages)
+        if not request.path.startswith('/api/'):
+            return response
+
+        # Get token from the Authorization header
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '').split()
+        if len(auth_header) == 2 and auth_header[0].lower() == 'bearer':
+            jwt_token = auth_header[1]
+            if self.verify_jwt_token(jwt_token):
+                return response
+            else:
+                return JsonResponse({'error': 'Invalid token'}, status=401)
+        else:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+
+    def verify_jwt_token(self, jwt_token):
+        """
+        Returns True if the provided JWT token is valid, False otherwise
+        """
+        try:
+            payload = jwt.decode(jwt_token, settings.JWT_SECRET, algorithms=['HS256'])
+            role = payload['role']
+            return (role == 'rest_api')
+        except (KeyError, jwt.ExpiredSignatureError, jwt.DecodeError):
+            return False
