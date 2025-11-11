@@ -28,6 +28,7 @@ umd-handle = "umd_handle.server:run"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "umd_handle.settings"
+python_files = ['tests.py','test_*.py','*_tests.py']
 
 [tool.ruff.format]
 # Prefer single quotes over double quotes.
