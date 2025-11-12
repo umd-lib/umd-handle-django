@@ -46,8 +46,6 @@ SERVER_PORT = env.str('SERVER_PORT', '3000')
 runserver.default_addr = SERVER_HOST
 runserver.default_port = SERVER_PORT
 
-DOMAIN_NAME = env.str('DOMAIN_NAME', 'handle-local')
-
 BASE_URL = URLObject(env.str('BASE_URL', f"http://handle-local:{SERVER_PORT}/"))
 CSRF_TRUSTED_ORIGINS = [str(BASE_URL.with_path(''))]
 
