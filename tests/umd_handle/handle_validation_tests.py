@@ -19,3 +19,11 @@ def test_prefix_must_be_known_prefix(valid_handle):
 
     with pytest.raises(ValidationError):
         handle.full_clean()
+
+@pytest.mark.django_db
+def test_prefix_must_be_known_repo(valid_handle):
+    handle = valid_handle
+    handle.repo = 'INVALID_REPO'
+
+    with pytest.raises(ValidationError):
+        handle.full_clean()

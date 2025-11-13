@@ -6,10 +6,21 @@ def validate_prefix(value):
     if value not in Handle.ALLOWED_PREFIXES:
         raise ValidationError(f"'{value}' is not an allowed prefix.")
 
+def validate_repo(value):
+    if value not in Handle.ALLOWED_REPOS:
+        raise ValidationError(f"'{value}' is not an allowed repo.")
+
 class Handle(TimeStampedModel):
 
     ALLOWED_PREFIXES = [
         '1903.1',
+    ]
+
+    ALLOWED_REPOS = [
+        'aspace',
+        'avalon',
+        'fcrepo',
+        'fedora2',
     ]
 
     prefix = models.CharField(
@@ -18,7 +29,10 @@ class Handle(TimeStampedModel):
     )
     suffix = models.IntegerField()
     url = models.CharField()
-    repo = models.CharField()
+    repo = models.CharField(
+        choices=[(repo, repo) for repo in ALLOWED_REPOS],
+        validators=[validate_repo]
+    )
     repo_id = models.CharField()
     description = models.CharField(blank=True)
     notes = models.TextField(blank=True)
