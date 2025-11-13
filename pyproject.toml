@@ -31,6 +31,11 @@ umd-handle = "umd_handle.server:run"
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "umd_handle.settings"
 python_files = ['tests.py','test_*.py','*_tests.py']
+filterwarnings = [
+    # Ignore pathlib.PurePath deprecation warning from xmlschema v2.5.1, which
+    # is a transitive dependency of pysaml2
+    "ignore:pathlib.PurePath:DeprecationWarning"
+]
 
 [tool.ruff.format]
 # Prefer single quotes over double quotes.
