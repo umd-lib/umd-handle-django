@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse, Http404
+from django.http import Http404, HttpResponseNotAllowed, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
@@ -16,14 +16,80 @@ def handles_prefix_suffix(request, prefix, suffix):
     try:
         handle = get_object_or_404(Handle, prefix=prefix, suffix=suffix)
 
-        json_response = {
-            "url":f"{handle.url}"
-        }
-        return JsonResponse(json_response)
+        if request.method == 'GET':
+            return handles_prefix_suffix_get(handle)
+        elif request.method == 'PATCH':
+            return handles_prefix_suffix_patch(request, handle)
+        else:
+            # Return 405 Method Not Allowed for any other method
+            return HttpResponseNotAllowed(['GET', 'POST'])
     except Http404:
         # Return an empty JSON response, with a 404 status if the handle is
         # not found.
         return JsonResponse({}, status=404)
+
+
+def handles_prefix_suffix_get(handle):
+    """
+    For GET requests to the "handles_prefix_suffix" endpoint, returns a
+    JsonResponse containing the URL associated with the given handle.
+
+    Returns a JsonResponse on success or error.
+    """
+    json_response = {
+        "url": f"{handle.url}"
+    }
+    return JsonResponse(json_response)
+
+
+def handles_prefix_suffix_patch(request, handle):
+    """
+    For PATCH requests to the "handles_prefix_suffix" endpoint, perform a
+    partial update on the given handle.
+
+    Returns a JsonResponse on success or error.
+    """
+
+    try:
+        body = request.body.decode('utf-8')
+        data = json.loads(body) if body else {}
+    except json.JSONDecodeError:
+        return JsonResponse({'errors': ['Invalid JSON']}, status=400)
+
+    allowed_fields = ['repo', 'repo_id', 'url', 'description', 'notes']
+
+    for key in allowed_fields:
+        if key in data:
+            setattr(handle, key, data.get(key))
+
+    try:
+        handle.full_clean()
+        handle.save()
+    except ValidationError as e:
+        messages = []
+        if hasattr(e, 'message_dict'):
+            for v in e.message_dict.values():
+                if isinstance(v, (list, tuple)):
+                    messages.extend([str(x) for x in v])
+                else:
+                    messages.append(str(v))
+        else:
+            messages = list(e.messages)
+        return JsonResponse({'errors': messages}, status=400)
+    except Exception as e:
+        return JsonResponse({'errors': [str(e)]}, status=400)
+
+    # Success response
+    json_response = {
+        'handle_url': handle.handle_url(),
+        'request': {
+            'prefix': handle.prefix,
+            'repo': handle.repo,
+            'repo_id': handle.repo_id,
+            'url': handle.url
+        }
+    }
+    return JsonResponse(json_response)
 
 
 @csrf_exempt
