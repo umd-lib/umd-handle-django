@@ -154,10 +154,12 @@ paths:
                 properties:
                   errors:
                     description: A list of error messages
-                    example: ["Prefix 'NON-EXISTENT PREFIX' is not a valid prefix"]
+                    example: {"errors": ["Enter a valid URL."]}
                     type: array
                     items:
                       type: string
+        '404':
+          description: Handle not found
 
 
         '401':
