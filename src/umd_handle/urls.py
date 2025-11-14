@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 from djangosaml2 import views as saml_views
-from umd_handle.health_check import health_check;
+from umd_handle.health_check import health_check
 
 urlpatterns = [
     # Redirect root to admin view

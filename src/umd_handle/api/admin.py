@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Handle, JWTToken
+from .models import Handle
 
 class HandleModelAdmin(admin.ModelAdmin):
     fields = [
