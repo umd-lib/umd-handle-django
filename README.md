@@ -123,6 +123,22 @@ the CSV file.
 A "--dry-run" option is available to determine the number of entries that would
 be added, updated, or are invalid.
 
+#### JWT Tokens import
+
+Entries from the "jwt_token_logs" table of the Rails-based "umd-handle"
+application can be imported using the "db_import_jwt_tokens_from_csv" management
+command:
+
+```zsh
+src/manage.py db_import_jwt_tokens_from_csv <CSV_FILE>
+```
+
+where \<CSV_FILE> is a CSV file of entries to load. Existing entries in the
+Django database that have matching token will be updated from the CSV file.
+
+A "--dry-run" option is available to determine the number of entries that would
+be added, updated, or are invalid.
+
 ### JWT Tokens
 
 A list of JWT Tokens that have been issued by the system are stored in the
