@@ -105,6 +105,24 @@ GitHub for information about setting up a MacBook to use the Kubernetes
 
 ## Django Management Tasks
 
+### CSV Import
+
+#### Handles import
+
+Entries from the "handles" table of the Rails-based "umd-handle" application
+can be imported using the "db_import_handles_from_csv" management command:
+
+```zsh
+src/manage.py db_import_handles_from_csv <CSV_FILE>
+```
+
+where \<CSV_FILE> is a CSV file of entries to load. Existing entries in the
+Django database that have matching prefix/suffix entries will be updated from
+the CSV file.
+
+A "--dry-run" option is available to determine the number of entries that would
+be added, updated, or are invalid.
+
 ### JWT Tokens
 
 A list of JWT Tokens that have been issued by the system are stored in the
@@ -117,7 +135,7 @@ invalidated. The "JWTToken" model plays no role in validating tokens.
 #### Create a JWT token for authorizing access to the REST API
 
 ```zsh
-python src/manage.py jwt_create_token "<DESCRIPTION>"
+src/manage.py jwt_create_token "<DESCRIPTION>"
 ```
 
 where \<DESCRIPTION> is a description of the server/service that will use the
@@ -126,7 +144,7 @@ token.
 #### List JWT tokens
 
 ```zsh
-python src/manage.py jwt_list_tokens
+src/manage.py jwt_list_tokens
 ```
 
 ---
