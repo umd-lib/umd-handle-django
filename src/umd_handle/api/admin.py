@@ -1,6 +1,12 @@
 from django.contrib import admin
+from django.contrib.auth.models import Group, User
 
 from .models import Handle
+
+# Unregister User and Group, because authentication/authorization is controlled
+# the Grouper, so there is no need to show these entries in the admin interface
+admin.site.unregister(User)
+admin.site.unregister(Group)
 
 class HandleAdmin(admin.ModelAdmin):
     fields = [

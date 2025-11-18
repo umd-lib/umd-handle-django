@@ -71,10 +71,10 @@ HANDLE_HTTP_PROXY_BASE=URLObject(env.str('HANDLE_HTTP_PROXY_BASE', '<SET HANDLE_
 # Application definition
 
 INSTALLED_APPS = [
-    'umd_handle.api',
     'admin_notice',
     'django.contrib.admin',
     'django.contrib.auth',
+    'umd_handle.api',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
