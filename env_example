@@ -4,7 +4,7 @@
 DEBUG=True
 
 # Server settings
-# SERVER_HOST - The IP address/host URL where the server is run.
+# BASE_URL - The IP address/host URL where the server is run.
 # SERVER_PORT - the port the application will run on in Docker. Ignored in
 #               local development
 # K8S_INTERNAL_HOST - the internal Kubernetes host name for the pod
@@ -13,8 +13,9 @@ BASE_URL=http://handle-local:3000/
 SERVER_PORT=3000
 K8S_INTERNAL_HOST=umd-handle-app
 
-# The base URL (including a trailing slash) for the handle proxy server
-# associated with this application. For example: "https://hdl-test.lib.umd.edu/"
+# HANDLE_HTTP_PROXY_BASE - The base URL (including a trailing slash) for the
+# Handle.net proxy server associated with this application.
+# For example: "https://hdl-test.lib.umd.edu/"
 HANDLE_HTTP_PROXY_BASE=http://hdl-local.lib.umd.edu/
 
 # SECRET_KEY - Secret key used for provide cryptographic signing.
