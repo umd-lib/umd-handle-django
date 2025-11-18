@@ -92,6 +92,64 @@ def test_handles_exists_return_true_if_handle_exists(client, jwt_token, handle1)
 
 
 @pytest.mark.django_db
+def test_handles_info_requires_jwt_token(client):
+    repo = '1903.1'
+    repo_id = '1'
+    response = client.get(reverse("handles_info"), data={'prefix': repo, 'suffix': repo_id})
+    assert response.status_code == 401
+
+@pytest.mark.django_db
+def test_handles_info_requires_prefix_and_suffix(client, jwt_token):
+    headers = { 'Authorization': f"Bearer {jwt_token}" }
+
+    # "prefix" is empty
+    response = client.get(reverse("handles_info"),
+                          data={'prefix': '', 'suffix': '1'},
+                          headers=headers
+                         )
+    assert response.status_code == 400
+
+    # "suffix" missing
+    response = client.get(reverse("handles_info"),
+                          data={'prefix': '1903.1'},
+                          headers=headers
+                         )
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_handles_info_returns_false_if_handle_does_not_exists(client, jwt_token):
+    prefix = 'prefix-does-not-exist'
+    suffix = '1'
+    headers = { 'Authorization': f"Bearer {jwt_token}" }
+
+    response = client.get(reverse("handles_info"),
+                          data={'prefix': prefix, 'suffix': suffix},
+                          headers=headers
+                         )
+
+    assert response.status_code == 200
+    expected_response = '{"exists": false, "request": {"prefix": "prefix-does-not-exist", "suffix": "1"}}'
+    assert response.content.decode('utf-8') == expected_response
+
+
+@pytest.mark.django_db
+def test_handles_info_returns_true_if_handle_exists(client, jwt_token, handle1):
+    prefix = handle1.prefix
+    suffix = handle1.suffix
+    headers = { 'Authorization': f"Bearer {jwt_token}" }
+
+    response = client.get(reverse("handles_info"),
+                          data={'prefix': prefix, 'suffix': suffix},
+                          headers=headers
+                         )
+
+    assert response.status_code == 200
+    expected_response = '{"exists": true, "handle_url": "http://hdl-local.lib.umd.edu/1903.1/1", "prefix": "1903.1", "suffix": "1", "url": "http://example.com/", "request": {"prefix": "1903.1", "suffix": "1"}}'
+    assert response.content.decode('utf-8') == expected_response
+
+
+@pytest.mark.django_db
 def test_handles_prefix_suffix_get_requires_jwt_token(client):
     prefix = '1903.1'
     suffix = '1'

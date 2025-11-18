@@ -49,6 +49,50 @@ def handles_exists(request):
 
         return JsonResponse(json_response)
 
+
+@csrf_exempt
+def handles_info(request):
+    """
+    Returns additional information about a handle with a specified prefix and
+    suffix
+    """
+    if request.method == 'GET':
+        # Retrieve the "prefix" and "suffic" parameters
+        prefix = request.GET.get('prefix', '')
+        suffix = request.GET.get('suffix', '')
+
+        if not prefix or not suffix:
+            return JsonResponse({'errors': ["'prefix' and 'suffix' parameters are required"]}, status=400)
+
+        try:
+            handle = Handle.objects.get(prefix=prefix, suffix=suffix)
+            exists = True
+        except Handle.DoesNotExist:
+            exists = False
+
+
+        request_dict = {
+            'prefix': prefix,
+            'suffix': suffix
+        }
+        if exists:
+            json_response = {
+                'exists': True,
+                'handle_url': handle.handle_url(),
+                'prefix': handle.prefix,
+                'suffix': str(handle.suffix),
+                'url': handle.url,
+                'request': request_dict
+            }
+        else:
+            json_response = {
+                'exists': False,
+                'request': request_dict
+            }
+
+        return JsonResponse(json_response)
+
+
 @csrf_exempt
 def handles_prefix_suffix(request, prefix, suffix):
     """

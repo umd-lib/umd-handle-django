@@ -18,4 +18,9 @@ urlpatterns = [
         views.handles_exists,
         name="handles_exists"
     ),
+    path(
+        "v1/handles/info",
+        views.handles_info,
+        name="handles_info"
+    ),
 ]
