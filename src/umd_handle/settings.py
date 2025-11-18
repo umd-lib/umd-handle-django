@@ -72,6 +72,7 @@ HANDLE_HTTP_PROXY_BASE=URLObject(env.str('HANDLE_HTTP_PROXY_BASE', '<SET HANDLE_
 
 INSTALLED_APPS = [
     'umd_handle.api',
+    'admin_notice',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -106,6 +107,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
+                'admin_notice.context_processors.notice',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -331,3 +333,8 @@ SAML_CONFIG = {
     }],
 }
 
+# Environment banner setting - defaults to displaying local environment banner
+# if DEBUG flag is set.
+ADMIN_NOTICE_TEXT = env.str('ENVIRONMENT_BANNER', 'Local Environment' if DEBUG else '')
+ADMIN_NOTICE_TEXT_COLOR = env.str('ENVIRONMENT_BANNER_FOREGROUND', '#fff')
+ADMIN_NOTICE_BACKGROUND = env.str('ENVIRONMENT_BANNER_BACKGROUND', '#008000')

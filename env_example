@@ -58,3 +58,16 @@ SESSION_COOKIE_SECURE=False
 # DB_PASSWORD=
 # DB_HOST=
 # DB_PORT=
+
+# Environment banner settings (intended for non-production environments)
+#
+# ENVIRONMENT_BANNER - the text to display in the banner. Comment out in
+#                      (non-DEBUG environments) or leave empty (in DEBUG
+#                      environments) to disable banner
+# ENVIRONMENT_BANNER_FOREGROUND - CSS color code (i.e., '#fff') for the
+#                                foreground text
+# ENVIRONMENT_BANNER_FOREGROUND - CSS color code (i.e., '#008000') for the
+#                                background text
+# ENVIRONMENT_BANNER=
+# ENVIRONMENT_BANNER_FOREGROUND=
+# ENVIRONMENT_BANNER_BACKGROUND=
