@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from csp.constants import SELF
 from django.core.management.commands.runserver import Command as runserver
 from django.core.management.utils import get_random_secret_key
 from environ import Env
@@ -331,6 +332,17 @@ SAML_CONFIG = {
         'key_file': SAML_KEY_FILE,
         'cert_file': SAML_CERT_FILE,
     }],
+}
+
+# Content security policy largely taken from
+# https://django-csp.readthedocs.io/en/v4.0/configuration.html#configuration
+CONTENT_SECURITY_POLICY = {
+    "EXCLUDE_URL_PREFIXES": [],
+    "DIRECTIVES": {
+        "default-src": [SELF],
+        "frame-ancestors": [SELF],
+        "form-action": [SELF],
+    },
 }
 
 # Environment banner setting - defaults to displaying local environment banner
