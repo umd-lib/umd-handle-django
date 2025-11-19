@@ -163,5 +163,16 @@ token.
 src/manage.py jwt_list_tokens
 ```
 
+## REST API
+
+The REST API is specified in the OpenAPI v3.0 format:
+
+* v1: [docs/umd-handle-open-api-v1.yml](docs/umd-handle-open-api-v1.yml)
+
+## License
+
+See the [LICENSE.md](LICENSE.md) file for license rights and limitations
+(Apache 2.0).
+
 ---
 [Django]: https://www.djangoproject.com/
