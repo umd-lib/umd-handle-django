@@ -196,6 +196,36 @@ def test_handles_mint_new_handle_success(settings, client, jwt_token):
     # ensure handle exists in db
     assert Handle.objects.filter(prefix='1903.1', repo_id='test-123').exists()
 
+@pytest.mark.django_db
+def test_handles_mint_new_handle_with_trailing_colon_in_hostname(settings, client, jwt_token):
+    """
+    This test is needed because Avalon may send URLs with a trailing colon in
+    the hostname, i.e.:
+
+    https://av.sandbox.lib.umd.edu:/media_objects/vq27zn67m
+
+    As of Django 5.2, the Django URLValidator does not accept this as a valid
+    URL, but the Python"urllib.parse" method does.
+    """
+    url = reverse('handles_mint_new_handle')
+    headers = {'Authorization': f"Bearer {jwt_token}"}
+    body = {
+        'prefix': '1903.1',
+        'url': 'https://av.sandbox.lib.umd.edu:/media_objects/vq27zn67m',
+        'repo': 'fedora2',
+        'repo_id': 'test-123'
+    }
+    response = client.post(
+        url, data=json.dumps(body), content_type='application/json', headers=headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data['suffix'] == '1'
+    assert data['handle_url'] == f'{settings.HANDLE_HTTP_PROXY_BASE}1903.1/1'
+    assert data['request'] == {"prefix":"1903.1","repo":"fedora2","repo_id":"test-123","url":"https://av.sandbox.lib.umd.edu:/media_objects/vq27zn67m"}
+    # ensure handle exists in db
+    assert Handle.objects.filter(prefix='1903.1', repo_id='test-123').exists()
+
 
 @pytest.mark.django_db
 def test_handles_mint_new_handle_requires_jwt_token(client):
