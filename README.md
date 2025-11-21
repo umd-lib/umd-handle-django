@@ -11,10 +11,12 @@ This application provides:
 * a REST-based API interface for administering handle to URL mappings
 * an HTTP-based user interface for administering handle to URL mappings
 
-Additional documentation for this application is in the "docs/" subdirectory,
-including:
+Additional documentation for this application is in the "[docs/](docs/)"
+subdirectory, including:
 
+* [Architecture Decision Records](docs/adr/)
 * [OpenAPI v3 Spec](docs/umd-handle-open-api-v1.yml)
+* [Test Plan](docs/TestPlan.md)
 
 ## Development Environment Setup
 
