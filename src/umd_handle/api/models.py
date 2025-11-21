@@ -1,14 +1,32 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
 from django.db import models
 from django.db.models import Max
 from django.db import transaction
 from django_extensions.db.models import TimeStampedModel
+from urllib.parse import urlparse
 
 def validate_prefix(value):
     if value not in Handle.ALLOWED_PREFIXES:
         raise ValidationError(f"'{value}' is not an allowed prefix.")
+
+def validate_url(value):
+    """
+    Using a custom URL validator instead of Django's URLValidator, because
+    Avalon may send URLs with a colon immediately after the hostname, i.e.:
+
+    https://av.sandbox.lib.umd.edu:/media_objects/vq27zn67m
+
+    and the Django URLValidator rejects those URLs are invalid.
+    """
+    parsed_url = urlparse(value)
+
+    if parsed_url.scheme not in ['http', 'https']:
+        raise ValidationError(f"'{value}' must use 'http' or 'https' scheme.")
+
+    if not parsed_url.netloc:
+        raise ValidationError(f"'{value}' is not a valid URL.")
+
 
 
 def validate_repo(value):
@@ -70,7 +88,7 @@ class Handle(TimeStampedModel):
         validators=[validate_prefix]
     )
     suffix = models.IntegerField()
-    url = models.CharField(validators=[URLValidator(schemes=['http', 'https'])])
+    url = models.CharField(validators=[validate_url])
     repo = models.CharField(
         choices=[(repo, repo) for repo in ALLOWED_REPOS],
         validators=[validate_repo]
