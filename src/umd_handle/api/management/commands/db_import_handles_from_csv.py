@@ -2,15 +2,13 @@ import csv
 from datetime import datetime
 
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
 from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from django.core.management.base import BaseCommand, CommandError
 
-from umd_handle.api.models import Handle
-
+from umd_handle.api.models import Handle, validate_url
 
 class Command(BaseCommand):
     help = "Import handles from a CSV into the Handle model."
@@ -33,8 +31,6 @@ class Command(BaseCommand):
         updated = 0
         skipped = 0
         errors = []
-
-        url_validator = URLValidator(schemes=['http', 'https'])
 
         for rownum, row in enumerate(reader, start=2):
             # Expected columns: id,prefix,suffix,url,repo,repo_id,description,notes,created_at,updated_at
@@ -63,7 +59,7 @@ class Command(BaseCommand):
             # Basic URL validation (catch totally malformed values early)
             try:
                 if url:
-                    url_validator(url)
+                    validate_url(url)
             except ValidationError as e:
                 errors.append((rownum, f"id={id},prefix/suffix={prefix}/{suffix}, Invalid URL '{url}': {e.messages}"))
                 continue
